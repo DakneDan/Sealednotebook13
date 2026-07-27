@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTG Sealed Tournament Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Open+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --surface-color: #111111;
+            --surface-color-alt: #1a1a1a;
+            --primary-red: #e32613; 
+            --text-color: #f5f5f5;
+            --text-muted: #999999;
+            --border-color: #2a2a2a;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            background-image: linear-gradient(to bottom, #111111 0%, #000000 30%);
+        }
+
+        .container {
+            background-color: var(--surface-color);
+            padding: 40px;
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            max-width: 950px;
+            width: 100%;
+            position: relative;
+            border: 1px solid #1f1f1f;
+        }
+
+        .top-line {
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            background-color: var(--primary-red);
+        }
+
+        .tag {
+            background-color: var(--primary-red);
+            color: #ffffff;
+            font-family: 'Open Sans', sans-serif;
+            font-weight: 800;
+            font-size: 0.75em;
+            letter-spacing: 1px;
+            padding: 4px 8px;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-bottom: 10px;
+            border-radius: 2px;
+        }
+        
+        .tag-blue { background-color: #1e5ba3; }
+
+        h1, h2, h3 {
+            font-family: 'Cinzel', serif;
+            color: #ffffff;
+            text-align: center;
+            letter-spacing: 1.5px;
+            margin-top: 0;
+            font-weight: 700;
+        }
+        
+        h1 { font-size: 2.2em; margin-bottom: 30px; text-transform: uppercase; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 0.85em; letter-spacing: 0.5px; color: #bbbbbb; text-transform: uppercase; }
+        
+        input[type="text"], input[type="date"], textarea {
+            width: 100%; padding: 14px; border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background-color: #080808; color: #ffffff; box-sizing: border-box;
+            font-family: 'Open Sans', sans-serif; font-size: 1em;
+            transition: border-color 0.2s;
+        }
+        input:focus, textarea:focus { border-color: #ffffff; outline: none; }
+        textarea { resize: vertical; min-height: 140px; line-height: 1.5; }
+        
+        .btn-main {
+            background-color: #ffffff; 
+            color: #000000;
+            border: none; padding: 14px 24px; font-size: 15px;
+            font-family: 'Open Sans', sans-serif; font-weight: 800; 
+            border-radius: 30px; cursor: pointer; width: 100%;
+            margin-top: 15px; transition: 0.2s; text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-main:hover { background-color: #e0e0e0; transform: scale(1.02); }
+        
+        .btn-secondary { background-color: transparent; color: #ffffff; border: 2px solid #ffffff; }
+        .btn-secondary:hover { background-color: rgba(255,255,255,0.1); }
+        
+        .btn-online { background-color: #1e5ba3; color: white; border: none; }
+        .btn-online:hover { background-color: #2772c9; transform: scale(1.02); }
+        .btn-online:disabled { background-color: #333; color: #777; cursor: not-allowed; transform: none; }
+        
+        .hidden { display: none; }
+        
+        .import-section {
+            margin-top: 35px; padding-top: 25px; border-top: 1px solid var(--border-color); text-align: center;
+        }
+        
+        #screenshot-area { background-color: var(--surface-color); padding: 20px; border-radius: 4px; }
+        
+        .header-info { text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .header-info h2 { font-size: 2em; margin: 0 0 12px 0; color: #ffffff; }
+        .header-info p { margin: 0; color: #cccccc; font-weight: 600; font-size: 1.1em; }
+        .header-info span.divider { color: var(--primary-red); margin: 0 10px; font-weight: bold; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 50px; font-size: 0.9em; }
+        th, td { padding: 16px 12px; text-align: center; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--surface-color-alt); color: #ffffff; font-family: 'Open Sans', sans-serif; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; font-size: 0.85em; }
+        .col-long { line-height: 1.3; min-width: 120px; }
+        tr:hover { background-color: rgba(255,255,255,0.03); }
+        
+        .match-row { display: flex; justify-content: space-between; align-items: center; padding: 18px 25px; border-bottom: 1px solid var(--border-color); background-color: var(--surface-color-alt); margin-bottom: 10px; border-radius: 4px; }
+        .player-name { flex: 1; font-weight: 700; font-size: 1.1em; color: #ffffff; }
+        .player-name:first-child { text-align: right; margin-right: 25px; }
+        .player-name:last-child { text-align: left; margin-left: 25px; }
+        
+        .score-inputs { display: flex; align-items: center; gap: 15px; }
+        .score-inputs input { width: 60px; height: 45px; text-align: center; font-size: 22px; background-color: #000000; color: #ffffff; border: 1px solid #444; border-radius: 4px; font-weight: 800; font-family: 'Cinzel', serif; }
+        .score-inputs input:focus { border-color: var(--primary-red); outline: none; }
+        .score-inputs span { font-weight: 800; color: #666; font-size: 1.2em; }
+        
+        .controls { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 30px; }
+        .controls > button { flex: 1; min-width: 200px; }
+        
+        @media (max-width: 768px) {
+            .match-row { flex-direction: column; gap: 15px; padding: 20px; }
+            .player-name:first-child, .player-name:last-child { text-align: center; margin: 0; }
+            th, td { padding: 10px 5px; font-size: 0.8em; }
+            .controls { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="setup-screen">
+    <div class="top-line"></div>
+    <div style="text-align: center;"><span class="tag">Tracker</span></div>
+    <h1>Nastavení Sealed Turnaje</h1>
+    
+    <div class="form-group">
+        <label for="edition">Název edice (Set):</label>
+        <input type="text" id="edition" placeholder="např. Outlaws of Thunder Junction">
+    </div>
+    <div class="form-group">
+        <label for="location">Místo konání:</label>
+        <input type="text" id="location" value="Zlín, Klubovna">
+    </div>
+    <div class="form-group">
+        <label for="date">Datum:</label>
+        <input type="date" id="date">
+    </div>
+    <div class="form-group">
+        <label for="players">Hráči (každý na nový řádek):</label>
+        <textarea id="players" placeholder="Hráč 1&#10;Hráč 2&#10;Hráč 3"></textarea>
+    </div>
+    <button class="btn-main" onclick="startTournament()">Vytvořit rozpis</button>
+
+    <div class="import-section">
+        <p style="color: var(--text-muted); font-size: 0.85em; margin: 0 0 15px 0; font-weight: 600; text-transform: uppercase;">Nedohráli jste? Nahrajte minulý TXT</p>
+        <input type="file" id="file-upload" accept=".txt" style="display: none;" onchange="importFromTxt(event)">
+        <button type="button" class="btn-main btn-secondary" style="margin-top: 0;" onclick="document.getElementById('file-upload').click()">Načíst výsledky z TXT</button>
+    </div>
+</div>
+
+<div class="container hidden" id="tournament-screen">
+    <div class="top-line"></div>
+    <div id="screenshot-area">
+        <div class="header-info">
+            <div style="text-align: center;"><span class="tag">Výsledky</span></div>
+            <h2 id="display-edition"></h2>
+            <p><span id="display-location"></span> <span class="divider">/</span> <span id="display-date"></span></p>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding-left: 15px;">Hráč</th>
+                    <th title="Počet odehraných soubojů">Souboje</th>
+                    <th title="Celkové skóre dílčích her">Skóre</th>
+                    <th title="1 bod za každou vyhranou hru" style="color: var(--primary-red);">Body</th>
+                    <th class="col-long">Opponent Match<br>Win Percentage</th>
+                    <th class="col-long">Game Win<br>Percentage</th>
+                </tr>
+            </thead>
+            <tbody id="standings-body">
+            </tbody>
+        </table>
+
+        <div style="text-align: center; margin-bottom: 20px;"><span class="tag tag-blue">Rozpis</span></div>
+        <div id="matches-container">
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button class="btn-main" onclick="exportToTxt()">Exportovat TXT</button>
+        <button class="btn-main btn-online" id="btn-google" onclick="exportToGoogle()">Odeslat do G-Tabulky</button>
+        <button class="btn-main btn-secondary" onclick="location.reload()">Zpět na začátek</button>
+    </div>
+</div>
+
+<script>
+    // Pevně vložená URL adresa tvého Google Apps Scriptu
+    const GOOGLE_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbzPZHBrGjSED2HDDab0PIuVN4Ih8RD8tW7aa32GQtHIQ4Mpa81bSM8wek4SCof-Q_Y2eA/exec";
+
+    let playersList = [];
+    let matches = [];
+    let importedScores = [];
+    let savedPlayersSorted = [];
+
+    document.getElementById('date').valueAsDate = new Date();
+
+    function importFromTxt(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            try {
+                const edMatch = text.match(/Edice:\s*(.*)/);
+                if (edMatch) document.getElementById('edition').value = edMatch[1].trim();
+
+                const locDateMatch = text.match(/Místo:\s*(.*?)\s*\|\s*Datum:\s*(.*)/);
+                if (locDateMatch) {
+                    document.getElementById('location').value = locDateMatch[1].trim();
+                    const dStr = locDateMatch[2].trim();
+                    const dMatch = dStr.match(/(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/);
+                    if (dMatch) {
+                        const dateVal = `${dMatch[3]}-${dMatch[2].padStart(2, '0')}-${dMatch[1].padStart(2, '0')}`;
+                        document.getElementById('date').value = dateVal;
+                    }
+                }
+
+                const matchesSection = text.split('VÝSLEDKY SOUBOJŮ:')[1];
+                if (!matchesSection) throw new Error("Chybí sekce");
+
+                const lines = matchesSection.split('\n');
+                let playersSet = new Set();
+                importedScores = [];
+
+                lines.forEach(line => {
+                    const m = line.match(/(.*?)\s*\[\s*(.*?)\s*:\s*(.*?)\s*\]\s*(.*)/);
+                    if (m) {
+                        const p1 = m[1].trim(), s1Str = m[2].trim(), s2Str = m[3].trim(), p2 = m[4].trim();
+                        playersSet.add(p1); playersSet.add(p2);
+                        importedScores.push({
+                            p1: p1, p2: p2,
+                            s1: s1Str === '_' ? null : parseInt(s1Str),
+                            s2: s2Str === '_' ? null : parseInt(s2Str)
+                        });
+                    }
+                });
+
+                document.getElementById('players').value = Array.from(playersSet).join('\n');
+                event.target.value = '';
+                alert("Data z TXT načtena.");
+            } catch (err) {
+                alert("Nepodařilo se přečíst soubor.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function startTournament() {
+        const editionInput = document.getElementById('edition').value.trim() || 'Neznámá edice';
+        const locationInput = document.getElementById('location').value.trim() || 'Neznámé místo';
+        const dateInput = document.getElementById('date').value;
+        const playersInput = document.getElementById('players').value;
+        
+        playersList = playersInput.split('\n').map(p => p.trim()).filter(p => p !== '');
+        
+        if (playersList.length < 2) {
+            alert('Zadejte alespoň 2 hráče.');
+            return;
+        }
+
+        document.getElementById('display-edition').innerText = editionInput;
+        document.getElementById('display-location').innerText = locationInput;
+        document.getElementById('display-date').innerText = new Date(dateInput).toLocaleDateString('cs-CZ');
+
+        generateMatches();
+        renderMatches();
+        updateStandings();
+
+        document.getElementById('setup-screen').classList.add('hidden');
+        document.getElementById('tournament-screen').classList.remove('hidden');
+    }
+
+    function generateMatches() {
+        matches = [];
+        for (let i = 0; i < playersList.length; i++) {
+            for (let j = i + 1; j < playersList.length; j++) {
+                matches.push({ p1: playersList[i], p2: playersList[j], s1: null, s2: null });
+            }
+        }
+        if (importedScores.length > 0) {
+            importedScores.forEach(imp => {
+                let match = matches.find(m => (m.p1 === imp.p1 && m.p2 === imp.p2) || (m.p1 === imp.p2 && m.p2 === imp.p1));
+                if (match) {
+                    if (match.p1 === imp.p1) { match.s1 = imp.s1; match.s2 = imp.s2; } 
+                    else { match.s1 = imp.s2; match.s2 = imp.s1; }
+                }
+            });
+        }
+    }
+
+    function renderMatches() {
+        const container = document.getElementById('matches-container');
+        container.innerHTML = '';
+        matches.forEach((m, index) => {
+            const s1Val = m.s1 !== null ? m.s1 : '';
+            const s2Val = m.s2 !== null ? m.s2 : '';
+            const row = document.createElement('div');
+            row.className = 'match-row';
+            row.innerHTML = `
+                <div class="player-name">${m.p1}</div>
+                <div class="score-inputs">
+                    <input type="number" min="0" max="3" placeholder="-" id="s1-${index}" value="${s1Val}" onchange="updateScore(${index})">
+                    <span>:</span>
+                    <input type="number" min="0" max="3" placeholder="-" id="s2-${index}" value="${s2Val}" onchange="updateScore(${index})">
+                </div>
+                <div class="player-name">${m.p2}</div>
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    function updateScore(matchIndex) {
+        const s1Input = document.getElementById(`s1-${matchIndex}`).value;
+        const s2Input = document.getElementById(`s2-${matchIndex}`).value;
+        matches[matchIndex].s1 = s1Input === '' ? null : parseInt(s1Input);
+        matches[matchIndex].s2 = s2Input === '' ? null : parseInt(s2Input);
+        updateStandings();
+    }
+
+    function updateStandings() {
+        let stats = {};
+        playersList.forEach(p => {
+            stats[p] = { matchesPlayed: 0, customPoints: 0, mtgMatchPoints: 0, gamesPlayed: 0, gamesWon: 0, gamesLost: 0, opponents: [] };
+        });
+
+        matches.forEach(m => {
+            if (m.s1 !== null && m.s2 !== null) {
+                let p1 = stats[m.p1], p2 = stats[m.p2];
+                p1.matchesPlayed++; p2.matchesPlayed++;
+                p1.opponents.push(m.p2); p2.opponents.push(m.p1);
+                p1.gamesWon += m.s1; p1.gamesLost += m.s2;
+                p2.gamesWon += m.s2; p2.gamesLost += m.s1;
+                let gamesTotal = m.s1 + m.s2;
+                p1.gamesPlayed += gamesTotal; p2.gamesPlayed += gamesTotal;
+                p1.customPoints += m.s1; p2.customPoints += m.s2;
+
+                if (m.s1 > m.s2) { p1.mtgMatchPoints += 3; } 
+                else if (m.s2 > m.s1) { p2.mtgMatchPoints += 3; } 
+                else if (m.s1 === m.s2 && gamesTotal > 0) { p1.mtgMatchPoints += 1; p2.mtgMatchPoints += 1; }
+            }
+        });
+
+        for (let name in stats) {
+            let p = stats[name];
+            p.mwp = p.matchesPlayed > 0 ? Math.max(0.3333, p.mtgMatchPoints / (p.matchesPlayed * 3)) : 0;
+            p.gwp = p.gamesPlayed > 0 ? Math.max(0.3333, p.gamesWon / p.gamesPlayed) : 0;
+        }
+
+        for (let name in stats) {
+            let p = stats[name];
+            if (p.opponents.length > 0) {
+                let sumOMWP = 0;
+                p.opponents.forEach(opp => sumOMWP += stats[opp].mwp);
+                p.omwp = sumOMWP / p.opponents.length;
+            } else { p.omwp = 0; }
+        }
+
+        savedPlayersSorted = Object.keys(stats).map(name => ({
+            name: name, ...stats[name]
+        })).sort((a, b) => {
+            if (b.customPoints !== a.customPoints) return b.customPoints - a.customPoints;
+            if (Math.abs(b.omwp - a.omwp) > 0.0001) return b.omwp - a.omwp;
+            return b.gwp - a.gwp;
+        });
+
+        const tbody = document.getElementById('standings-body');
+        tbody.innerHTML = '';
+        savedPlayersSorted.forEach(p => {
+            let omwpStr = p.matchesPlayed > 0 ? (p.omwp * 100).toFixed(2) + '%' : '-';
+            let gwpStr = p.gamesPlayed > 0 ? (p.gwp * 100).toFixed(2) + '%' : '-';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="text-align: left; padding-left: 15px; font-weight:700;">${p.name}</td>
+                    <td>${p.matchesPlayed}</td>
+                    <td style="color:var(--text-muted);">${p.gamesWon} : ${p.gamesLost}</td>
+                    <td style="color:var(--primary-red); font-weight:800; font-size:1.2em;">${p.customPoints}</td>
+                    <td>${omwpStr}</td>
+                    <td>${gwpStr}</td>
+                </tr>
+            `;
+        });
+    }
+    
+    async function exportToGoogle() {
+        const btn = document.getElementById('btn-google');
+        btn.innerText = "Odesílám...";
+        btn.disabled = true;
+
+        const payload = {
+            edition: document.getElementById('display-edition').innerText,
+            location: document.getElementById('display-location').innerText,
+            date: document.getElementById('display-date').innerText,
+            standings: savedPlayersSorted.map(p => ({
+                name: p.name,
+                points: p.customPoints,
+                matches: p.matchesPlayed,
+                omwp: p.matchesPlayed > 0 ? (p.omwp * 100).toFixed(2) + '%' : '0%',
+                gwp: p.gamesPlayed > 0 ? (p.gwp * 100).toFixed(2) + '%' : '0%'
+            }))
+        };
+
+        try {
+            await fetch(GOOGLE_WEBHOOK_URL, {
+                method: 'POST',
+                mode: 'no-cors', 
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            btn.innerText = "Úspěšně odesláno!";
+            btn.style.backgroundColor = "#2e7d32";
+            setTimeout(() => {
+                btn.innerText = "Odeslat do G-Tabulky";
+                btn.style.backgroundColor = "";
+                btn.disabled = false;
+            }, 3000);
+            
+        } catch (err) {
+            console.error(err);
+            btn.innerText = "Chyba připojení";
+            btn.style.backgroundColor = "#d32f2f";
+            setTimeout(() => {
+                btn.innerText = "Odeslat do G-Tabulky";
+                btn.style.backgroundColor = "";
+                btn.disabled = false;
+            }, 3000);
+        }
+    }
+
+    function exportToTxt() {
+        const edition = document.getElementById('display-edition').innerText;
+        const location = document.getElementById('display-location').innerText;
+        const date = document.getElementById('display-date').innerText;
+        
+        let content = `MAGIC: THE GATHERING - SEALED TURNAJ\n`;
+        content += `Edice: ${edition}\n`;
+        content += `Místo: ${location} | Datum: ${date}\n`;
+        content += `Poznámka: Hodnoceno systémem 1 bod za každou vyhranou dílčí hru.\n`;
+        content += `=================================================================================\n\n`;
+        
+        content += `KONEČNÉ POŘADÍ:\n`;
+        content += `---------------------------------------------------------------------------------\n`;
+        content += `Poř. | Hráč               | Body | Souboje | Opponent Match Win % | Game Win %\n`;
+        content += `---------------------------------------------------------------------------------\n`;
+        
+        const rows = document.querySelectorAll('#standings-body tr');
+        rows.forEach((row, index) => {
+            const cols = row.querySelectorAll('td');
+            let name = cols[0].innerText.padEnd(18, ' ');
+            let points = cols[3].innerText.padStart(4, ' ');
+            let matches = cols[1].innerText.padStart(7, ' ');
+            let omwp = cols[4].innerText.padStart(20, ' ');
+            let gwp = cols[5].innerText.padStart(10, ' ');
+            
+            let rank = String(index + 1).padStart(2, ' ') + ".";
+            content += `${rank} | ${name} | ${points} | ${matches} | ${omwp} | ${gwp}\n`;
+        });
+
+        content += `\n\nVÝSLEDKY SOUBOJŮ:\n`;
+        content += `---------------------------------------------------------------------------------\n`;
+        matches.forEach(m => {
+            let scoreStr = (m.s1 !== null && m.s2 !== null) ? `${m.s1}:${m.s2}` : `_ : _`;
+            content += `${m.p1.padStart(18, ' ')}  [ ${scoreStr} ]  ${m.p2}\n`;
+        });
+
+        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `MTG_${edition.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.txt`;
+        link.click();
+    }
+</script>
+</body>
+</html>
